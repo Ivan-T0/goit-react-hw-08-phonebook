@@ -20,7 +20,7 @@ export const HomePage = styled.div`
   height: calc(90vh);
 
   margin-top: auto;
-  background-image: url('https://cdn.pixabay.com/photo/2018/01/31/07/36/secret-3120483_1280.jpg');
+  background-image: url('https://cdn.pixabay.com/photo/2015/02/02/11/09/office-620822_1280.jpg');
   background-repeat: no-repeat;
   background-size: cover;
 
