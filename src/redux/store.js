@@ -1,6 +1,5 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { contactsReducer } from './slise/slise';
-import { authReducer } from './slise/auth-slice';
+import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
+
 import {
   persistStore,
   persistReducer,
@@ -12,24 +11,31 @@ import {
   REGISTER,
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import { contactsReducer } from './contacts/slice';
+import { authReducer } from './auth/slice';
 
-const persistConfig = {
-  key: 'root',
+const middleware = [
+  ...getDefaultMiddleware({
+    serializableCheck: {
+      ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+    },
+  }),
+];
+
+const authPersistConfig = {
+  key: 'auth',
   storage,
   whitelist: ['token'],
 };
 
-const persistedReducer = persistReducer(persistConfig, authReducer);
-
 export const store = configureStore({
-  reducer: { phonebook: contactsReducer, auth: persistedReducer },
-  middleware(getDefaultMiddleware) {
-    return getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-      },
-    });
+  reducer: {
+    auth: persistReducer(authPersistConfig, authReducer),
+    // auth: authReducer,
+    contacts: contactsReducer,
   },
+  middleware,
+  devTools: process.env.NODE_ENV === 'development',
 });
 
 export const persistor = persistStore(store);

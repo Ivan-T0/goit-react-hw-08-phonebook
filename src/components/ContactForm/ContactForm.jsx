@@ -1,124 +1,79 @@
-
 import { useState } from 'react';
-import { FaUserPlus } from 'react-icons/fa';
-import { Form } from '../ContactForm/ContactForm.styled';
-import { useSelector, useDispatch } from 'react-redux';
-import { addContacts } from 'redux/operetions/operetions';
-import { selectContacts, selectOperetion } from 'redux/selector/selectors';
-import { Audio } from 'react-loader-spinner';
-import { Button, TextField } from '@mui/material';
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer, toast } from 'react-toastify';
+import { nanoid } from '@reduxjs/toolkit';
+import { contactSelector } from 'redux/contacts/selectors';
+import { Report } from 'notiflix';
 
-function ContactForm() {
-  const items = useSelector(selectContacts);
-  const operetion = useSelector(selectOperetion);
+import { useDispatch, useSelector } from 'react-redux';
+import { ContactFormStyle } from 'components/App.styled';
+import operationsContacts from 'redux/contacts/contactsOperations';
+
+export default function ContactForm() {
   const dispatch = useDispatch();
-
+  const { contacts } = useSelector(contactSelector);
   const [name, setName] = useState('');
-  const [number, setPhone] = useState('');
-
-  const handlChange = e => {
-    const { value, name } = e.currentTarget;
-
-    switch (name) {
+  const [number, setNumber] = useState('');
+  const handleNameChange = event => {
+    const { name: nameTarget, value } = event.target;
+    switch (nameTarget) {
       case 'name':
         setName(value);
         break;
       case 'number':
-        setPhone(value);
+        setNumber(value);
         break;
       default:
         return;
     }
   };
-  const addContact = ({ name, number }) => {
-    const newContact = { name, number };
-    if (
-      items.some(contact => contact.name.toLowerCase() === name.toLowerCase())
-    ) {
-      alert(`${name} is already in contacts.`);
-    } else {
-      dispatch(addContacts(newContact));
-      toast.success('Сontact saved successfully!');
-      reset();
+  const handleSubmit = event => {
+    event.preventDefault();
+
+    const isInclude = contacts.items.find(contact => contact.name === name);
+    if (isInclude) {
+      Report.info(name + ' Is already in contacts!');
+      return;
     }
-  };
-
-  const reset = () => {
+    dispatch(operationsContacts.createContacts({ name, number }));
     setName('');
-    setPhone('');
+    setNumber('');
   };
-
-  const iconStyles = { fill: '#FFFFFF', marginLeft: '10px' };
+  let nameId = nanoid();
+  let numberId = nanoid();
   return (
-    <Form
-      onSubmit={e => {
-        e.preventDefault();
-        addContact({ name, number });
-      }}
-    >
-      <TextField
-        type="text"
-        name="name"
-        pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-        title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-        required
-        size="small"
-        margin="normal"
-        fullWidth={true}
-        value={name}
-        onChange={handlChange}
-        label="Name"
-        placeholder="enter your name"
-        variant="outlined"
-      />
-      <TextField
-        type="tel"
-        name="number"
-        pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-        title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-        required
-        size="small"
-        margin="normal"
-        fullWidth={true}
-        value={number}
-        onChange={handlChange}
-        label="Number"
-        placeholder="enter your phone"
-        variant="outlined"
-      />
-
-      <Button
-        sx={{
-          marginTop: 1,
-          fontFamily: 'Roboto Slab',
-          width: '50%',
-          marginBottom: 2,
-        }}
-        type="submit"
-        variant="contained"
-      >
-        {operetion === 'add' ? (
-          <Audio
-            height="24.4"
-            width="100"
-            color="#ffffff"
-            ariaLabel="audio-loading"
-            wrapperStyle={{}}
-            wrapperClass="wrapper-class"
-            visible={true}
+    <ContactFormStyle>
+      <form onSubmit={handleSubmit} number={number} name={name}>
+        <label className="formLabel" htmlFor={nameId}>
+          Name
+          <input
+            className="formInput"
+            id={nameId}
+            type="text"
+            name="name"
+            value={name}
+            pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+            title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+            required
+            onChange={handleNameChange}
           />
-        ) : (
-          <>
-            Add contact
-            <FaUserPlus style={iconStyles} size={20} />
-          </>
-        )}
-      </Button>
-      <ToastContainer autoClose={2000} />
-    </Form>
+        </label>
+        <label className="formLabel" htmlFor={numberId}>
+          Number
+          <input
+            className="formInput"
+            id={numberId}
+            type="tel"
+            name="number"
+            value={number}
+            pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
+            title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
+            required
+            onChange={handleNameChange}
+          />
+        </label>
+        <button className="formBtn" type="submit">
+          Add contact
+        </button>
+      </form>
+    </ContactFormStyle>
   );
 }
-
-export default ContactForm;

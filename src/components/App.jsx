@@ -1,49 +1,60 @@
 import { Route, Routes } from 'react-router-dom';
+
+import { lazy, Suspense, useEffect } from 'react';
+import operations from 'redux/auth/operations';
 import { useDispatch, useSelector } from 'react-redux';
-import { lazy, useEffect } from 'react';
-import { refreshUser } from 'redux/operetions/auth-operetions';
-import PrivateRoute from './PrivateRoute/PrivateRoute';
-import Home from '../pages/Home/Home';
+import AppBar from './AppBar';
+import PrivateRoute from './PrivateRoute';
+import RestrictedRoute from './RestrictedRoute';
+import { AppContainer } from './App.styled';
+import { getAuthToken } from 'redux/auth/authSelectors';
 
-import PublicRoute from './PublicRoute/PublicRoute';
-import NotFaund from '../pages/NotFaund/NotFaund';
-import Header from './Header/Header';
-import { getIsRefreshUser } from 'redux/selector/selectors';
-import Loader from './Loader/Loader';
-const Contacts = lazy(() => import('./Contacts/Contacts'));
-const AuthUserComponent = lazy(() =>
-  import('./AuthUserComponent/AuthUserComponent')
-);
+const Home = lazy(() => import('../pages/Home/Home'));
+const Register = lazy(() => import('../pages/Register/Register'));
+const Login = lazy(() => import('../pages/Login/Login'));
+const Contacts = lazy(() => import('../pages/Contacts/Contacts'));
 
-const App = () => {
+export function App() {
+  const token = useSelector(getAuthToken);
   const dispatch = useDispatch();
-  const isRefreshUser = useSelector(getIsRefreshUser);
-
   useEffect(() => {
-    dispatch(refreshUser());
-  }, [dispatch]);
-
+    if (token) {
+      dispatch(operations.fetchCurrentUser())
+        .unwrap()
+        .catch(() => dispatch(operations.logOut()));
+    }
+  }, [dispatch, token]);
   return (
-    <div>
-      {isRefreshUser ? (
-        <Loader />
-      ) : (
-        <Routes>
-          <Route path="/" element={<Header />}>
-            <Route index element={<Home />} />
-            <Route element={<PrivateRoute />}>
-              <Route path="contacts" element={<Contacts />} />
-            </Route>
-            <Route element={<PublicRoute />}>
-              <Route path="login" element={<AuthUserComponent />} />
-              <Route path="register" element={<AuthUserComponent />} />
-            </Route>
-            <Route path="*" element={<NotFaund />} />
-          </Route>
-        </Routes>
-      )}
-    </div>
+    <AppContainer>
+      <header>
+        <AppBar></AppBar>
+      </header>
+      <main>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Routes>
+            <Route path="/home" element={<Home />} />
+            <Route
+              path="/register"
+              element={
+                <RestrictedRoute component={Register} redirectTo="/login" />
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <RestrictedRoute component={Login} redirectTo="/contacts" />
+              }
+            />
+            <Route
+              path="/contacts"
+              element={
+                <PrivateRoute component={Contacts} redirectTo="/login" />
+              }
+            />
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </Suspense>
+      </main>
+    </AppContainer>
   );
-};
-
-export default App;
+}

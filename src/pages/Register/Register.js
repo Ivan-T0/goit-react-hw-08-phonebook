@@ -4,34 +4,47 @@ import { object, string } from 'yup';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import operations from '../../redux/auth/operations';
-import { ContainerLoginForm } from '../../components/App.styled';
-import { Button } from '@mui/material';
+import { ContainerRegisterForm } from '../../components/App.styled';
+import Button from '@mui/material/Button';
 
-export default function Login() {
+export default function Register() {
   const dispatch = useDispatch();
-  const handleSubmit = ({ email, password }, { resetForm }) => {
-    dispatch(operations.logIn({ email, password }));
+  const handleSubmit = ({ name, email, password }, { resetForm }) => {
+    dispatch(
+      operations.register({
+        name,
+        email,
+        password,
+      })
+    );
     resetForm();
   };
 
   const initialValues = {
+    name: '',
     email: '',
     password: '',
   };
   const schema = object({
+    name: string().required(),
     email: string().required(),
     password: string().min(6).max(12).required(),
   });
   return (
-    <ContainerLoginForm>
+    <ContainerRegisterForm>
       <Formik
         initialValues={initialValues}
         validationSchema={schema}
         onSubmit={handleSubmit}
       >
         <Form autoComplete="off">
-          <h2>Login</h2>
+          <h2>Registration</h2>
 
+          <label htmlFor="name">
+            Name
+            <Field type="name" name="name" />
+            <ErrorMessage name="name" component="div"></ErrorMessage>
+          </label>
           <label htmlFor="email">
             Email
             <Field type="email" name="email" />
@@ -43,11 +56,11 @@ export default function Login() {
             <ErrorMessage name="password" component="div"></ErrorMessage>
           </label>
           <Button type="submit" variant="contained">
-            Log In
+            Sign In
           </Button>
-          <Link to="/register">Don't have an account. Sign Up </Link>
+          <Link to="/login">Already registered? Sign In </Link>
         </Form>
       </Formik>
-    </ContainerLoginForm>
+    </ContainerRegisterForm>
   );
 }
